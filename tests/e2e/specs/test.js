@@ -1,8 +1,6 @@
-// https://docs.cypress.io/api/table-of-contents
-
-describe("My First Test", () => {
-  it("Visits the app root url", () => {
+describe("Giving credit to author", () => {
+  it("Performs a smoke test on the app", () => {
     cy.visit("/");
-    cy.contains("h1", "Welcome to Your Vue.js + TypeScript App");
+    cy.contains("p", "Written by Evan You");
   });
 });
