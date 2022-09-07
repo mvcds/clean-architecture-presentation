@@ -189,6 +189,14 @@ body {
 	margin: 0 0 0 43px;
 }
 
+.view {
+  display: flex;
+
+  label {
+    flex: 1;
+  }
+}
+
 .todo-list li.editing .view {
 	display: none;
 }
