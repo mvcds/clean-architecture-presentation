@@ -12,7 +12,7 @@
           @keyup.enter="addTodo"
         />
       </header>
-      <section class="main" v-show="todos.length">
+      <section class="main" v-show="hasTodos">
         <input
           id="toggle-all"
           class="toggle-all"
@@ -44,7 +44,7 @@
           </li>
         </ul>
       </section>
-      <footer class="footer" v-show="todos.length">
+      <footer class="footer" v-show="hasTodos">
         <span class="todo-count">
           <strong v-text="remaining"></strong>
           {{ pluralize("item", remaining) }} left
@@ -69,7 +69,7 @@
         <button
           class="clear-completed"
           @click="removeCompleted"
-          v-show="todos.length > remaining"
+          v-show="canClear"
         >
           Clear completed
         </button>
@@ -137,6 +137,8 @@ export default defineComponent({
         todos.value.forEach((todo: Todo) => (todo.completed = value));
       },
     });
+    const hasTodos = computed(() => !!todos.value.length);
+    const canClear = computed(() => todos.value.length > remaining.value);
 
     //Methods
     const pluralize = (word: string, count: number) => {
@@ -191,7 +193,6 @@ export default defineComponent({
 
     return {
       //Data
-      todos,
       visibility,
       editedTodo,
       newTodo,
@@ -199,6 +200,8 @@ export default defineComponent({
       filteredTodos,
       remaining,
       allDone,
+      hasTodos,
+      canClear,
       //Methods
       pluralize,
       addTodo,
