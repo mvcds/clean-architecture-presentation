@@ -77,13 +77,14 @@
 </template>
 
 <script lang="ts">
+import TodoList from "clean-architecture-presentation-presenters/todo-list";
 import Todo from "clean-architecture-presentation-presenters/todo";
 import filters, {
   Visibility,
 } from "clean-architecture-presentation-presenters/filters";
 import storage from "@/infrastructure/storage";
-import { computed, defineComponent, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, defineComponent, reactive, ref, watch } from "vue";
+import { RouteLocationNormalizedLoaded, useRoute, useRouter } from "vue-router";
 
 const createFilterLink = (visibility: Visibility) => (filter: string) => {
   return {
@@ -92,6 +93,14 @@ const createFilterLink = (visibility: Visibility) => (filter: string) => {
     link: filter === "all" ? "/" : filter,
     isCurrent: visibility === filter,
   };
+};
+
+const getVisibility = (route: RouteLocationNormalizedLoaded) => {
+  const {
+    params: { visibility },
+  } = route;
+
+  return visibility === "" ? "all" : (visibility as Visibility);
 };
 
 export default defineComponent({
@@ -118,41 +127,29 @@ export default defineComponent({
     }
   },
   setup() {
+    const storedTodos = storage.read("todos", []) as Todo[];
+    const visibility = getVisibility(useRoute());
+    const list = reactive(new TodoList(storedTodos, visibility));
+
     //Data
-    const todos = ref(storage.read("todos", []) as Todo[]);
     const beforeEditCache = ref("");
     const newTodo = ref("");
     const editedTodo = ref<Todo | null>(null);
 
     //Computed
-    const visibility = computed(() => {
-      const {
-        params: { visibility: param },
-      } = useRoute();
-
-      if (param === "") {
-        return "all";
-      }
-
-      return param as Visibility;
-    });
-
-    const filteredTodos = computed(() => {
-      const filter = filters[visibility.value] ?? filters.all;
-
-      return filter(todos.value);
-    });
-    const remaining = computed(() => filters.active(todos.value).length);
+    const todos = computed(() => list.todos);
+    const filteredTodos = computed(() => list.filteredTodos);
+    const remaining = computed(() => list.remaining);
     const allDone = computed({
       get: () => remaining.value === 0,
       set: (value) => {
         todos.value.forEach((todo: Todo) => (todo.completed = value));
       },
     });
-    const hasTodos = computed(() => !!todos.value.length);
-    const canClear = computed(() => todos.value.length > remaining.value);
+    const hasTodos = computed(() => list.hasTodos);
+    const canClear = computed(() => list.todos.length > remaining.value);
     const filterLinks = computed(() =>
-      Object.keys(filters).map(createFilterLink(visibility.value))
+      Object.keys(filters).map(createFilterLink(list.visibility))
     );
 
     //Methods
@@ -161,24 +158,13 @@ export default defineComponent({
     };
 
     const addTodo = () => {
-      const value = newTodo.value?.trim();
-
-      if (!value) {
-        return;
+      if (list.add(newTodo.value)) {
+        newTodo.value = "";
       }
-
-      todos.value.push({
-        id: todos.value.length + 1,
-        title: value,
-        completed: false,
-      });
-
-      newTodo.value = "";
     };
 
     const removeTodo = (todo: Todo) => {
-      var index = todos.value.indexOf(todo);
-      todos.value.splice(index, 1);
+      list.remove(todo);
     };
 
     const editTodo = (todo: Todo) => {
@@ -203,18 +189,24 @@ export default defineComponent({
     };
 
     const removeCompleted = () => {
-      todos.value = filters.active(todos.value);
+      list.todos = filters.active(todos.value);
     };
 
     //Watchers
     watch(todos, storage.write.bind(null, "todos"), { deep: true });
+    watch(
+      useRoute(),
+      (value) => {
+        list.visibility = getVisibility(value);
+      },
+      { deep: true }
+    );
 
     return {
       //Data
       editedTodo,
       newTodo,
       //Computed
-      visibility,
       filteredTodos,
       remaining,
       allDone,
