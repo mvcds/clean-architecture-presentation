@@ -51,18 +51,22 @@
         </span>
         <ul class="filters">
           <li>
-            <a href="#/all" :class="{ selected: visibility === 'all' }">All</a>
-          </li>
-          <li>
-            <a href="#/active" :class="{ selected: visibility === 'active' }"
-              >Active</a
+            <router-link to="/" :class="{ selected: visibility === 'all' }"
+              >All</router-link
             >
           </li>
           <li>
-            <a
-              href="#/completed"
+            <router-link
+              to="/active"
+              :class="{ selected: visibility === 'active' }"
+              >Active</router-link
+            >
+          </li>
+          <li>
+            <router-link
+              to="/completed"
               :class="{ selected: visibility === 'completed' }"
-              >Completed</a
+              >Completed</router-link
             >
           </li>
         </ul>
@@ -85,6 +89,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 type Todo = {
   id: number;
@@ -139,15 +144,40 @@ export default defineComponent({
       }
     },
   },
+  beforeMount() {
+    const router = useRouter();
+    const {
+      params: { visibility },
+    } = useRoute();
+
+    const [, ...keys] = Object.keys(filters);
+
+    const isValid = ["", ...keys].includes(visibility as string);
+
+    if (!isValid) {
+      router.replace("/");
+    }
+  },
   setup() {
     //Data
     const todos = ref(storage.read("todos", []) as Todo[]);
     const beforeEditCache = ref("");
     const newTodo = ref("");
     const editedTodo = ref<Todo | null>(null);
-    const visibility = ref<Visibility>("all");
 
     //Computed
+    const visibility = computed(() => {
+      const {
+        params: { visibility: param },
+      } = useRoute();
+
+      if (param === "") {
+        return "all";
+      }
+
+      return param as Visibility;
+    });
+
     const filteredTodos = computed(() => {
       return filters[visibility.value](todos.value);
     });
@@ -217,10 +247,10 @@ export default defineComponent({
 
     return {
       //Data
-      visibility,
       editedTodo,
       newTodo,
       //Computed
+      visibility,
       filteredTodos,
       remaining,
       allDone,
