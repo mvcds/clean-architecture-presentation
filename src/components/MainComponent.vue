@@ -50,24 +50,13 @@
           {{ pluralize("item", remaining) }} left
         </span>
         <ul class="filters">
-          <li>
-            <router-link to="/" :class="{ selected: visibility === 'all' }"
-              >All</router-link
-            >
-          </li>
-          <li>
+          <li v-for="filter in filterLinks" :key="filter.id">
             <router-link
-              to="/active"
-              :class="{ selected: visibility === 'active' }"
-              >Active</router-link
+              :to="filter.link"
+              :class="{ selected: filter.isCurrent }"
             >
-          </li>
-          <li>
-            <router-link
-              to="/completed"
-              :class="{ selected: visibility === 'completed' }"
-              >Completed</router-link
-            >
+              {{ filter.name }}
+            </router-link>
           </li>
         </ul>
         <button
@@ -95,6 +84,15 @@ import { useRoute, useRouter } from "vue-router";
 import filters from "./filters";
 
 type Visibility = keyof typeof filters;
+
+const createFilterLink = (visibility: Visibility) => (filter: string) => {
+  return {
+    id: filter,
+    name: `${filter[0].toUpperCase()}${filter.substring(1)}`,
+    link: filter === "all" ? "/" : filter,
+    isCurrent: visibility === filter,
+  };
+};
 
 export default defineComponent({
   name: "MainComponent",
@@ -153,6 +151,9 @@ export default defineComponent({
     });
     const hasTodos = computed(() => !!todos.value.length);
     const canClear = computed(() => todos.value.length > remaining.value);
+    const filterLinks = computed(() =>
+      Object.keys(filters).map(createFilterLink(visibility.value))
+    );
 
     //Methods
     const pluralize = (word: string, count: number) => {
@@ -219,6 +220,7 @@ export default defineComponent({
       allDone,
       hasTodos,
       canClear,
+      filterLinks,
       //Methods
       pluralize,
       addTodo,
