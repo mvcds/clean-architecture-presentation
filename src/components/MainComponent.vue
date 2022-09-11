@@ -179,7 +179,9 @@ export default defineComponent({
     });
 
     const filteredTodos = computed(() => {
-      return filters[visibility.value](todos.value);
+      const filter = filters[visibility.value] ?? filters.all;
+
+      return filter(todos.value);
     });
     const remaining = computed(() => filters.active(todos.value).length);
     const allDone = computed({
