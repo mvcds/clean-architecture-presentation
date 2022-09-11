@@ -84,7 +84,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 
 type Todo = {
   id: number;
@@ -109,6 +109,27 @@ const filters = {
 
 type Visibility = keyof typeof filters;
 
+const storage = {
+  read<T = unknown>(key: string, defaultValue?: T): T | null {
+    const content = localStorage.getItem(key);
+
+    if (content) {
+      return JSON.parse(content);
+    }
+
+    if (defaultValue) {
+      storage.write(key, defaultValue);
+      return defaultValue;
+    }
+
+    return null;
+  },
+  write<T = unknown>(key: string, value: T): void {
+    const content = JSON.stringify(value);
+    localStorage.setItem(key, content);
+  },
+};
+
 export default defineComponent({
   name: "MainComponent",
   directives: {
@@ -120,7 +141,7 @@ export default defineComponent({
   },
   setup() {
     //Data
-    const todos = ref<Todo[]>([]);
+    const todos = ref(storage.read("todos", []) as Todo[]);
     const beforeEditCache = ref("");
     const newTodo = ref("");
     const editedTodo = ref<Todo | null>(null);
@@ -190,6 +211,9 @@ export default defineComponent({
     const removeCompleted = () => {
       todos.value = filters.active(todos.value);
     };
+
+    //Watchers
+    watch(todos, storage.write.bind(null, "todos"), { deep: true });
 
     return {
       //Data
