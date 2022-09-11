@@ -88,52 +88,13 @@
 </template>
 
 <script lang="ts">
+import Todo from "@/domain/todo";
+import storage from "@/infrastructure/storage";
 import { computed, defineComponent, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-
-type Todo = {
-  id: number;
-  title: string;
-  completed: boolean;
-};
-
-const isComplete = (todo: Todo) => todo.completed;
-const isActive = (todo: Todo) => !todo.completed;
-
-const filters = {
-  all(todos: Todo[]) {
-    return todos;
-  },
-  active(todos: Todo[]) {
-    return todos.filter(isActive);
-  },
-  completed(todos: Todo[]) {
-    return todos.filter(isComplete);
-  },
-};
+import filters from "./filters";
 
 type Visibility = keyof typeof filters;
-
-const storage = {
-  read<T = unknown>(key: string, defaultValue?: T): T | null {
-    const content = localStorage.getItem(key);
-
-    if (content) {
-      return JSON.parse(content);
-    }
-
-    if (defaultValue) {
-      storage.write(key, defaultValue);
-      return defaultValue;
-    }
-
-    return null;
-  },
-  write<T = unknown>(key: string, value: T): void {
-    const content = JSON.stringify(value);
-    localStorage.setItem(key, content);
-  },
-};
 
 export default defineComponent({
   name: "MainComponent",
