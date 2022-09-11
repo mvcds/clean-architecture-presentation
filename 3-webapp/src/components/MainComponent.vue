@@ -77,13 +77,13 @@
 </template>
 
 <script lang="ts">
-import Todo from "@/domain/todo";
+import Todo from "clean-architecture-presentation-presenters/todo";
+import filters, {
+  Visibility,
+} from "clean-architecture-presentation-presenters/filters";
 import storage from "@/infrastructure/storage";
 import { computed, defineComponent, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import filters from "./filters";
-
-type Visibility = keyof typeof filters;
 
 const createFilterLink = (visibility: Visibility) => (filter: string) => {
   return {
